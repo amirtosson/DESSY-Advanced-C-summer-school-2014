@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+# This script creates a Makefile for you which can compile and link
+# exactly one executable from all of your source files placed in this
+# directory. The name of the executable will be the same as the name
+# of your directory.
+#
+# Usage:
+#
+# Place all your header and source files in one directory.
+#
+# Name your directory whatever you want to name the executable.
+# The executable will be named exactly as the directory containing
+# your source files.
+#
+# Source file extension must be .cc or .cpp.
+#
+# Go to your source directory and run this script directly from there.
+# Don't run the script from another directory!
+#
+# This script usually won't run on a Mac. :(
+
+set -e
+
+if [ -f Makefile ]; then
+  cp Makefile Makefile~
+fi
+
+SRC=`ls -1 | egrep '.cc$' | tr '\012' ' '`
+OBJ=`ls -1 | egrep '.cc$' | sed 's/.cc$/.o/' | tr '\012' ' '`
+
+cat > Makefile.tmp <<EOF
+EXE = `basename "$PWD"`
+OBJ = $OBJ
+
+CXX      = c++
+CXXFLAGS = -Wall -std=c++0x
+LDFLAGS  =
+
+all: \$(EXE)
+
+.PHONY: clean
+
+clean:
+	rm -f \$(EXE) \$(OBJ)
+
+\$(EXE): \$(OBJ)
+	\$(CXX) -o \$@ \$(LDFLAGS) \$+
+
+# --- object dependencies ---
+
+EOF
+
+for i in $SRC; do
+  g++ -MM -std=c++0x $i
+  echo '	$(CXX) $(CXXFLAGS) -c -o $@ $<'
+  echo ''
+done >> Makefile.tmp
+
+mv Makefile.tmp Makefile
+
+exit 0
